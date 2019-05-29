@@ -1881,7 +1881,7 @@ esac
 # Feedback model
 AC_ARG_WITH([feedback],
    [AS_HELP_STRING([--with-feedback=<model>],
-      [Feedback model to use @<:@none, EAGLE, debug default: none@:>@]
+      [Feedback model to use @<:@none, EAGLE, SIMBA, debug default: none@:>@]
    )],
    [with_feedback="$withval"],
    [with_feedback="none"]
@@ -1898,6 +1898,9 @@ fi
 case "$with_feedback" in
    EAGLE)
       AC_DEFINE([FEEDBACK_EAGLE], [1], [EAGLE stellar feedback and evolution model])
+   ;;
+   SIMBA)
+      AC_DEFINE([FEEDBACK_SIMBA], [1], [SIMBA stellar feedback and evolution model])
    ;;
    none)
       AC_DEFINE([FEEDBACK_NONE], [1], [No feedback])

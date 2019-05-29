@@ -27,6 +27,8 @@
 #include "./feedback/none/feedback_properties.h"
 #elif defined(FEEDBACK_EAGLE)
 #include "./feedback/EAGLE/feedback_properties.h"
+#elif defined(FEEDBACK_SIMBA)
+#include "./feedback/SIMBA/feedback_properties.h"
 #else
 #error "Invalid choice of feedback model"
 #endif

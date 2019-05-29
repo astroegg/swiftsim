@@ -29,6 +29,9 @@
 #elif defined(FEEDBACK_EAGLE)
 #include "./feedback/EAGLE/feedback.h"
 #include "./feedback/EAGLE/feedback_iact.h"
+#elif defined(FEEDBACK_SIMBA)
+#include "./feedback/SIMBA/feedback.h"
+#include "./feedback/SIMBA/feedback_iact.h"
 #else
 #error "Invalid choice of feedback model"
 #endif
