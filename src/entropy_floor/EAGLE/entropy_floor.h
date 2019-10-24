@@ -37,29 +37,57 @@
  */
 struct entropy_floor_properties {
 
-  /*! Density threshold for the Jeans floor in Hydrogen atoms per cubic cm */
-  float Jeans_density_threshold_H_p_cm3;
+  /*! Density threshold for the Jeans_L floor in Hydrogen atoms per cubic cm */
+  float Jeans_L_density_threshold_H_p_cm3;
 
-  /*! Density threshold for the Jeans floor in internal units */
-  float Jeans_density_threshold;
+  /*! Density threshold for the Jeans_L floor in internal units */
+  float Jeans_L_density_threshold;
 
-  /*! Inverse of the density threshold for the Jeans floor in internal units */
-  float Jeans_density_threshold_inv;
+  /*! Inverse of the density threshold for the Jeans_L floor in internal units
+   */
+  float Jeans_L_density_threshold_inv;
 
-  /*! Over-density threshold for the Jeans floor */
-  float Jeans_over_density_threshold;
+  /*! Over-density threshold for the Jeans_L floor */
+  float Jeans_L_over_density_threshold;
 
-  /*! Slope of the Jeans floor power-law */
-  float Jeans_gamma_effective;
+  /*! Slope of the Jeans_L floor power-law */
+  float Jeans_L_gamma_effective;
 
-  /*! Temperature of the Jeans floor at the density threshold in Kelvin */
-  float Jeans_temperature_norm_K;
+  /*! Temperature of the Jeans_L floor at the density threshold in Kelvin */
+  float Jeans_L_temperature_norm_K;
 
-  /*! Temperature of the Jeans floor at the density thresh. in internal units */
-  float Jeans_temperature_norm;
+  /*! Temperature of the Jeans_L floor at the density thresh. in internal units
+   */
+  float Jeans_L_temperature_norm;
 
-  /*! Pressure of the Jeans floor at the density thresh. in internal units */
-  float Jeans_pressure_norm;
+  /*! Pressure of the Jeans_L floor at the density thresh. in internal units */
+  float Jeans_L_pressure_norm;
+
+  /*! Density threshold for the Jeans_M floor in Hydrogen atoms per cubic cm */
+  float Jeans_M_density_threshold_H_p_cm3;
+
+  /*! Density threshold for the Jeans_M floor in internal units */
+  float Jeans_M_density_threshold;
+
+  /*! Inverse of the density threshold for the Jeans_M floor in internal units
+   */
+  float Jeans_M_density_threshold_inv;
+
+  /*! Over-density threshold for the Jeans_M floor */
+  float Jeans_M_over_density_threshold;
+
+  /*! Slope of the Jeans_M floor power-law */
+  float Jeans_M_gamma_effective;
+
+  /*! Temperature of the Jeans_M floor at the density threshold in Kelvin */
+  float Jeans_M_temperature_norm_K;
+
+  /*! Temperature of the Jeans_M floor at the density thresh. in internal units
+   */
+  float Jeans_M_temperature_norm;
+
+  /*! Pressure of the Jeans_M floor at the density thresh. in internal units */
+  float Jeans_M_pressure_norm;
 
   /*! Density threshold for the Cool floor in Hydrogen atoms per cubic cm */
   float Cool_density_threshold_H_p_cm3;
@@ -114,16 +142,28 @@ static INLINE float entropy_floor(
   /* Physical pressure */
   float pressure = 0.f;
 
-  /* Are we in the regime of the Jeans equation of state? */
-  if ((rho_com >= rho_crit_baryon * props->Jeans_over_density_threshold) &&
-      (rho_phys >= props->Jeans_density_threshold)) {
+  /* Are we in the regime of the Jeans_L equation of state? */
+  if ((rho_com >= rho_crit_baryon * props->Jeans_L_over_density_threshold) &&
+      (rho_phys >= props->Jeans_L_density_threshold)) {
 
-    const float pressure_Jeans =
-        props->Jeans_pressure_norm *
-        powf(rho_phys * props->Jeans_density_threshold_inv,
-             props->Jeans_gamma_effective);
+    const float pressure_Jeans_L =
+        props->Jeans_L_pressure_norm *
+        powf(rho_phys * props->Jeans_L_density_threshold_inv,
+             props->Jeans_L_gamma_effective);
 
-    pressure = max(pressure, pressure_Jeans);
+    pressure = max(pressure, pressure_Jeans_L);
+  }
+
+  /* Are we in the regime of the Jeans_M equation of state? */
+  if ((rho_com >= rho_crit_baryon * props->Jeans_M_over_density_threshold) &&
+      (rho_phys >= props->Jeans_M_density_threshold)) {
+
+    const float pressure_Jeans_M =
+        props->Jeans_M_pressure_norm *
+        powf(rho_phys * props->Jeans_M_density_threshold_inv,
+             props->Jeans_M_gamma_effective);
+
+    pressure = max(pressure, pressure_Jeans_M);
   }
 
   /* Are we in the regime of the Cool equation of state? */
@@ -174,17 +214,30 @@ static INLINE float entropy_floor_temperature(
   /* Physical */
   float temperature = 0.f;
 
-  /* Are we in the regime of the Jeans equation of state? */
-  if ((rho_com >= rho_crit_baryon * props->Jeans_over_density_threshold) &&
-      (rho_phys >= props->Jeans_density_threshold)) {
+  /* Are we in the regime of the Jeans_L equation of state? */
+  if ((rho_com >= rho_crit_baryon * props->Jeans_L_over_density_threshold) &&
+      (rho_phys >= props->Jeans_L_density_threshold)) {
 
-    const float jeans_slope = props->Jeans_gamma_effective - 1.f;
+    const float jeans_slope = props->Jeans_L_gamma_effective - 1.f;
 
-    const float temperature_Jeans =
-        props->Jeans_temperature_norm *
-        pow(rho_phys * props->Jeans_density_threshold_inv, jeans_slope);
+    const float temperature_Jeans_L =
+        props->Jeans_L_temperature_norm *
+        pow(rho_phys * props->Jeans_L_density_threshold_inv, jeans_slope);
 
-    temperature = max(temperature, temperature_Jeans);
+    temperature = max(temperature, temperature_Jeans_L);
+  }
+
+  /* Are we in the regime of the Jeans_M equation of state? */
+  if ((rho_com >= rho_crit_baryon * props->Jeans_M_over_density_threshold) &&
+      (rho_phys >= props->Jeans_M_density_threshold)) {
+
+    const float jeans_slope = props->Jeans_M_gamma_effective - 1.f;
+
+    const float temperature_Jeans_M =
+        props->Jeans_M_temperature_norm *
+        pow(rho_phys * props->Jeans_M_density_threshold_inv, jeans_slope);
+
+    temperature = max(temperature, temperature_Jeans_M);
   }
 
   /* Are we in the regime of the Cool equation of state? */
@@ -223,14 +276,23 @@ static INLINE void entropy_floor_init(struct entropy_floor_properties *props,
                                       struct swift_params *params) {
 
   /* Read the parameters in the units they are set */
-  props->Jeans_density_threshold_H_p_cm3 = parser_get_param_float(
-      params, "EAGLEEntropyFloor:Jeans_density_threshold_H_p_cm3");
-  props->Jeans_over_density_threshold = parser_get_param_float(
-      params, "EAGLEEntropyFloor:Jeans_over_density_threshold");
-  props->Jeans_temperature_norm_K = parser_get_param_float(
-      params, "EAGLEEntropyFloor:Jeans_temperature_norm_K");
-  props->Jeans_gamma_effective =
-      parser_get_param_float(params, "EAGLEEntropyFloor:Jeans_gamma_effective");
+  props->Jeans_L_density_threshold_H_p_cm3 = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_L_density_threshold_H_p_cm3");
+  props->Jeans_L_over_density_threshold = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_L_over_density_threshold");
+  props->Jeans_L_temperature_norm_K = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_L_temperature_norm_K");
+  props->Jeans_L_gamma_effective = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_L_gamma_effective");
+
+  props->Jeans_M_density_threshold_H_p_cm3 = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_M_density_threshold_H_p_cm3");
+  props->Jeans_M_over_density_threshold = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_M_over_density_threshold");
+  props->Jeans_M_temperature_norm_K = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_M_temperature_norm_K");
+  props->Jeans_M_gamma_effective = parser_get_param_float(
+      params, "EAGLEEntropyFloor:Jeans_M_gamma_effective");
 
   props->Cool_density_threshold_H_p_cm3 = parser_get_param_float(
       params, "EAGLEEntropyFloor:Cool_density_threshold_H_p_cm3");
@@ -243,24 +305,41 @@ static INLINE void entropy_floor_init(struct entropy_floor_properties *props,
 
   /* Cross-check that the input makes sense */
   if (props->Cool_density_threshold_H_p_cm3 >=
-      props->Jeans_density_threshold_H_p_cm3) {
+      props->Jeans_M_density_threshold_H_p_cm3) {
     error(
-        "Invalid values for the entrop floor density thresholds. The 'Jeans' "
+        "Invalid values for the entrop floor density thresholds. The 'Jeans_M' "
         "threshold (%e cm^-3) should be at a higher density than the 'Cool' "
         "threshold (%e cm^-3)",
-        props->Jeans_density_threshold_H_p_cm3,
+        props->Jeans_M_density_threshold_H_p_cm3,
         props->Cool_density_threshold_H_p_cm3);
+  }
+  if (props->Jeans_M_density_threshold_H_p_cm3 >=
+      props->Jeans_L_density_threshold_H_p_cm3) {
+    error(
+        "Invalid values for the entrop floor density thresholds. The 'Jeans_L' "
+        "threshold (%e cm^-3) should be at a higher density than the 'Jeans_M' "
+        "threshold (%e cm^-3)",
+        props->Jeans_L_density_threshold_H_p_cm3,
+        props->Jeans_M_density_threshold_H_p_cm3);
   }
 
   /* Initial Hydrogen abundance (mass fraction) */
   const double X_H = hydro_props->hydrogen_mass_fraction;
 
   /* Now convert to internal units assuming primodial Hydrogen abundance */
-  props->Jeans_temperature_norm =
-      props->Jeans_temperature_norm_K /
+  props->Jeans_L_temperature_norm =
+      props->Jeans_L_temperature_norm_K /
       units_cgs_conversion_factor(us, UNIT_CONV_TEMPERATURE);
-  props->Jeans_density_threshold =
-      props->Jeans_density_threshold_H_p_cm3 /
+  props->Jeans_L_density_threshold =
+      props->Jeans_L_density_threshold_H_p_cm3 /
+      units_cgs_conversion_factor(us, UNIT_CONV_NUMBER_DENSITY) *
+      phys_const->const_proton_mass / X_H;
+
+  props->Jeans_M_temperature_norm =
+      props->Jeans_M_temperature_norm_K /
+      units_cgs_conversion_factor(us, UNIT_CONV_TEMPERATURE);
+  props->Jeans_M_density_threshold =
+      props->Jeans_M_density_threshold_H_p_cm3 /
       units_cgs_conversion_factor(us, UNIT_CONV_NUMBER_DENSITY) *
       phys_const->const_proton_mass / X_H;
 
@@ -276,14 +355,20 @@ static INLINE void entropy_floor_init(struct entropy_floor_properties *props,
   const float mean_molecular_weight = hydro_props->mu_neutral;
 
   /* Get the common terms */
-  props->Jeans_density_threshold_inv = 1.f / props->Jeans_density_threshold;
+  props->Jeans_L_density_threshold_inv = 1.f / props->Jeans_L_density_threshold;
+  props->Jeans_M_density_threshold_inv = 1.f / props->Jeans_M_density_threshold;
   props->Cool_density_threshold_inv = 1.f / props->Cool_density_threshold;
 
   /* P_norm = (k_B * T) / (m_p * mu) * rho_threshold */
-  props->Jeans_pressure_norm =
-      ((phys_const->const_boltzmann_k * props->Jeans_temperature_norm) /
+  props->Jeans_L_pressure_norm =
+      ((phys_const->const_boltzmann_k * props->Jeans_L_temperature_norm) /
        (phys_const->const_proton_mass * mean_molecular_weight)) *
-      props->Jeans_density_threshold;
+      props->Jeans_L_density_threshold;
+
+  props->Jeans_M_pressure_norm =
+      ((phys_const->const_boltzmann_k * props->Jeans_M_temperature_norm) /
+       (phys_const->const_proton_mass * mean_molecular_weight)) *
+      props->Jeans_M_density_threshold;
 
   props->Cool_pressure_norm =
       ((phys_const->const_boltzmann_k * props->Cool_temperature_norm) /
@@ -300,10 +385,16 @@ static INLINE void entropy_floor_print(
     const struct entropy_floor_properties *props) {
 
   message("Entropy floor is 'EAGLE' with:");
-  message("Jeans limiter with slope n=%.3f at rho=%e (%e H/cm^3) and T=%.1f K",
-          props->Jeans_gamma_effective, props->Jeans_density_threshold,
-          props->Jeans_density_threshold_H_p_cm3,
-          props->Jeans_temperature_norm);
+  message(
+      "Jeans_L limiter with slope n=%.3f at rho=%e (%e H/cm^3) and T=%.1f K",
+      props->Jeans_L_gamma_effective, props->Jeans_L_density_threshold,
+      props->Jeans_L_density_threshold_H_p_cm3,
+      props->Jeans_L_temperature_norm);
+  message(
+      "Jeans_M limiter with slope n=%.3f at rho=%e (%e H/cm^3) and T=%.1f K",
+      props->Jeans_M_gamma_effective, props->Jeans_M_density_threshold,
+      props->Jeans_M_density_threshold_H_p_cm3,
+      props->Jeans_M_temperature_norm);
   message(" Cool limiter with slope n=%.3f at rho=%e (%e H/cm^3) and T=%.1f K",
           props->Cool_gamma_effective, props->Cool_density_threshold,
           props->Cool_density_threshold_H_p_cm3, props->Cool_temperature_norm);

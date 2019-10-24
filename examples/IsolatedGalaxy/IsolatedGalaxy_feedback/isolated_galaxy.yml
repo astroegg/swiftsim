@@ -105,14 +105,18 @@ EAGLEStarFormation:
   
 # Parameters for the EAGLE "equation of state"
 EAGLEEntropyFloor:
-  Jeans_density_threshold_H_p_cm3: 0.1       # Physical density above which the EAGLE Jeans limiter entropy floor kicks in expressed in Hydrogen atoms per cm^3.
-  Jeans_over_density_threshold:    10.       # Overdensity above which the EAGLE Jeans limiter entropy floor can kick in.
-  Jeans_temperature_norm_K:        8000      # Temperature of the EAGLE Jeans limiter entropy floor at the density threshold expressed in Kelvin.
-  Jeans_gamma_effective:           1.3333333 # Slope the of the EAGLE Jeans limiter entropy floor
-  Cool_density_threshold_H_p_cm3: 1e-5       # Physical density above which the EAGLE Cool limiter entropy floor kicks in expressed in Hydrogen atoms per cm^3.
-  Cool_over_density_threshold:    10.        # Overdensity above which the EAGLE Cool limiter entropy floor can kick in.
-  Cool_temperature_norm_K:        8000       # Temperature of the EAGLE Cool limiter entropy floor at the density threshold expressed in Kelvin.
-  Cool_gamma_effective:           1.         # Slope the of the EAGLE Cool limiter entropy floor
+  Jeans_L_density_threshold_H_p_cm3: 1e2       # Physical density above which the EAGLE Jeans_L limiter entropy floor kicks in expressed in Hydrogen atoms per cm^3.
+  Jeans_L_over_density_threshold:    10.       # Overdensity above which the EAGLE Jeans_L limiter entropy floor can kick in.
+  Jeans_L_temperature_norm_K:        80000     # Temperature of the EAGLE Jeans_L limiter entropy floor at the density threshold expressed in Kelvin.
+  Jeans_L_gamma_effective:           2.        # Slope the of the EAGLE Jeans_L limiter entropy floor
+  Jeans_M_density_threshold_H_p_cm3: 0.1       # Physical density above which the EAGLE Jeans_M limiter entropy floor kicks in expressed in Hydrogen atoms per cm^3.
+  Jeans_M_over_density_threshold:    10.       # Overdensity above which the EAGLE Jeans_M limiter entropy floor can kick in.
+  Jeans_M_temperature_norm_K:        8000      # Temperature of the EAGLE Jeans_M limiter entropy floor at the density threshold expressed in Kelvin.
+  Jeans_M_gamma_effective:           1.3333333 # Slope the of the EAGLE Jeans_M limiter entropy floor
+  Cool_density_threshold_H_p_cm3: 1e-5         # Physical density above which the EAGLE Cool limiter entropy floor kicks in expressed in Hydrogen atoms per cm^3.
+  Cool_over_density_threshold:    10.          # Overdensity above which the EAGLE Cool limiter entropy floor can kick in.
+  Cool_temperature_norm_K:        8000         # Temperature of the EAGLE Cool limiter entropy floor at the density threshold expressed in Kelvin.
+  Cool_gamma_effective:           1.           # Slope the of the EAGLE Cool limiter entropy floor
 
 # EAGLE feedback model with constant feedback energy fraction
 EAGLEFeedback:
