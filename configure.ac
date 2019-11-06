@@ -1881,7 +1881,7 @@ esac
 # Feedback model
 AC_ARG_WITH([feedback],
    [AS_HELP_STRING([--with-feedback=<model>],
-      [Feedback model to use @<:@none, EAGLE, SIMBA, debug default: none@:>@]
+      [Feedback model to use @<:@none, EAGLE, debug default: none@:>@]
    )],
    [with_feedback="$withval"],
    [with_feedback="none"]
@@ -2098,6 +2098,9 @@ case "$with_star_formation" in
    ;;
    GEAR)
       AC_DEFINE([STAR_FORMATION_GEAR], [1], [GEAR star formation model (Revaz and Jablonka (2018))])
+   ;;
+   SIMBA)
+      AC_DEFINE([STAR_FORMATION_SIMBA], [1], [SIMBA stellar feedback incorporated into EAGLE star formation  model (Dave et al (2019))])
    ;;
    *)
       AC_MSG_ERROR([Unknown star formation model])
