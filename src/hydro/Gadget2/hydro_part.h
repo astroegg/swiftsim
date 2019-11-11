@@ -39,6 +39,7 @@
 #include "star_formation_struct.h"
 #include "timestep_limiter_struct.h"
 #include "tracers_struct.h"
+#include "feedback/SIMBA/feedback_struct.h"
 
 /* Extra particle data not needed during the SPH loops over neighbours. */
 struct xpart {
@@ -66,6 +67,9 @@ struct xpart {
 
   /* Additional data used by the star formation */
   struct star_formation_xpart_data sf_data;
+
+  /* Additional data used by the star formation */
+  struct feedback_xpart_data feedback_data;
 
 #ifdef WITH_LOGGER
   /* Additional data for the particle logger */
