@@ -288,8 +288,7 @@ void engine_repartition_trigger(struct engine *e) {
         }
 
         /* Get CPU time used since the last call to this function. */
-        double elapsed_cputime =
-            clocks_get_cputime_used() - e->cputime_last_step;
+        double elapsed_cputime = e->cputime_last_step_launch;
 
         /* Gather the elapsed CPU times from all ranks for the last step. */
         double elapsed_cputimes[e->nr_nodes];
@@ -330,10 +329,6 @@ void engine_repartition_trigger(struct engine *e) {
     /* Remember we did this. */
     if (e->forcerepart) e->last_repartition = e->step;
   }
-
-  /* We always reset CPU time for next check, unless it will not be used. */
-  if (e->reparttype->type != REPART_NONE)
-    e->cputime_last_step = clocks_get_cputime_used();
 
   if (e->verbose)
     message("took %.3f %s", clocks_from_ticks(getticks() - tic),
@@ -2314,10 +2309,23 @@ void engine_step(struct engine *e) {
     gravity_exact_force_compute(e->s, e);
 #endif
 
+  /* CPU timing used for estimating the balance.*/
+#ifdef WITH_MPI
+  double cputime = 0.0;
+  if (e->reparttype->type != REPART_NONE) cputime = clocks_get_cputime_used();
+#endif
+
   /* Start all the tasks. */
   TIMER_TIC;
   engine_launch(e);
   TIMER_TOC(timer_runners);
+
+#ifdef WITH_MPI
+  /* And the actual CPU time used. XXX ignore these calls unless the trigger
+   * will be checked. Could move into engine_launch() and always call? XXX */
+  if (e->reparttype->type != REPART_NONE)
+    e->cputime_last_step_launch = clocks_get_cputime_used() - cputime;
+#endif
 
 #ifdef SWIFT_GRAVITY_FORCE_CHECKS
   /* Check the accuracy of the gravity calculation */
@@ -3414,7 +3422,7 @@ void engine_init(struct engine *e, struct space *s, struct swift_params *params,
   e->parameter_file = params;
   e->stf_this_timestep = 0;
 #ifdef WITH_MPI
-  e->cputime_last_step = 0;
+  e->cputime_last_step_launch = 0;
   e->last_repartition = 0;
 #endif
   e->total_nr_cells = 0;

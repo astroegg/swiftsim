@@ -356,8 +356,8 @@ struct engine {
   ticks tic_step, toc_step;
 
 #ifdef WITH_MPI
-  /* CPU time of the last step. */
-  double cputime_last_step;
+  /* CPU time of last engine launch in last engine step. */
+  double cputime_last_step_launch;
 
   /* Step of last repartition. */
   int last_repartition;
