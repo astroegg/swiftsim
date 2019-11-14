@@ -295,6 +295,25 @@ double clocks_get_cputime_used(void) {
 }
 
 /**
+ * @brief return the cpu time used.
+ *
+ * Uses the times(2) function to access the user cpu times and returns the sum
+ * of these for the process tree, i.e. current process plus "waited-for"
+ * children. This may be pthread implementation specific as to what that
+ * exactly means. Note we do not include the system time as that includes
+ * spin times and we don't want to give credit for that.
+ *
+ * @result cpu time used in sysconf(_SC_CLK_TCK) ticks, usually 100/s not our
+ *         usual ticks.
+ */
+double clocks_get_sys_cputime_used(void) {
+
+  struct tms tmstic;
+  times(&tmstic);
+  return (double)(tmstic.tms_stime + tmstic.tms_cstime);
+}
+
+/**
  * @brief Return an integer based on the current time.
  *
  * Normally this will be the remainder of the current number of nanoseconds

@@ -53,6 +53,7 @@ const char *clocks_get_timesincestart(void);
 double clocks_get_hours_since_start(void);
 
 double clocks_get_cputime_used(void);
+double clocks_get_sys_cputime_used(void);
 int clocks_random_seed(void);
 
 #endif /* SWIFT_CLOCKS_H */

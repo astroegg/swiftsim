@@ -251,6 +251,7 @@ void engine_repartition_trigger(struct engine *e) {
 #ifdef WITH_MPI
 
   const ticks tic = getticks();
+  static int opened = 0;
 
   /* Do nothing if there have not been enough steps since the last repartition
    * as we don't want to repeat this too often or immediately after a
@@ -289,36 +290,84 @@ void engine_repartition_trigger(struct engine *e) {
 
         /* Get CPU time used since the last call to this function. */
         double elapsed_cputime = e->cputime_last_step_launch;
+        double elapsed_sys_cputime = e->sys_cputime_last_step_launch;
 
         /* Gather the elapsed CPU times from all ranks for the last step. */
         double elapsed_cputimes[e->nr_nodes];
         MPI_Gather(&elapsed_cputime, 1, MPI_DOUBLE, elapsed_cputimes, 1,
+                   MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        double elapsed_sys_cputimes[e->nr_nodes];
+        MPI_Gather(&elapsed_sys_cputime, 1, MPI_DOUBLE, elapsed_sys_cputimes, 1,
                    MPI_DOUBLE, 0, MPI_COMM_WORLD);
         if (e->nodeID == 0) {
 
           /* Get the range and mean of cputimes. */
           double mintime = elapsed_cputimes[0];
           double maxtime = elapsed_cputimes[0];
+
+          double smintime = elapsed_sys_cputimes[0];
+          double smaxtime = elapsed_sys_cputimes[0];
+
+          double tmintime = mintime + smintime;
+          double tmaxtime = maxtime + smaxtime;
+
           double sum = elapsed_cputimes[0];
+          double ssum = elapsed_sys_cputimes[0];
+          double tsum = sum + ssum;
+
           for (int k = 1; k < e->nr_nodes; k++) {
             if (elapsed_cputimes[k] > maxtime) maxtime = elapsed_cputimes[k];
             if (elapsed_cputimes[k] < mintime) mintime = elapsed_cputimes[k];
+
+            if (elapsed_sys_cputimes[k] > smaxtime) smaxtime = elapsed_sys_cputimes[k];
+            if (elapsed_sys_cputimes[k] < smintime) smintime = elapsed_sys_cputimes[k];
+
+            double total = elapsed_cputimes[k] + elapsed_sys_cputimes[k];
+            if (total > tmaxtime) tmaxtime = total;
+            if (total < tmintime) tmintime = total;
+
             sum += elapsed_cputimes[k];
+            ssum += elapsed_sys_cputimes[k];
+            tsum += total;
           }
           double mean = sum / (double)e->nr_nodes;
+          double smean = ssum / (double)e->nr_nodes;
+          double tmean = tsum / (double)e->nr_nodes;
 
           /* Are we out of balance? */
           double abs_trigger = fabs(e->reparttype->trigger);
-          if (((maxtime - mintime) / mean) > abs_trigger) {
+          double balance = (maxtime - mintime) / mean;
+          if (balance > abs_trigger) {
             if (e->verbose)
               message("trigger fraction %.3f > %.3f will repartition",
-                      (maxtime - mintime) / mean, abs_trigger);
+                      balance, abs_trigger);
             e->forcerepart = 1;
           } else {
             if (e->verbose)
               message("trigger fraction %.3f =< %.3f will not repartition",
-                      (maxtime - mintime) / mean, abs_trigger);
+                     balance, abs_trigger);
           }
+
+          /* Keep a log of all CPU times for debugging load issues. */
+          FILE *logfile = NULL;
+          if (!opened) {
+            logfile = fopen("cpu-loads.log", "w");
+            fprintf(logfile, "# step rank user sys sum\n");
+            opened = 1;
+          } else {
+            logfile = fopen("cpu-loads.log", "a");
+          }
+
+          for (int k = 0; k < e->nr_nodes; k++) {
+            fprintf(logfile, "%d %d %f %f %f\n", e->step, k, 
+                    elapsed_cputimes[k], elapsed_sys_cputimes[k],
+                    elapsed_cputimes[k] + elapsed_sys_cputimes[k]);
+          }
+          fprintf(logfile, "# balances: %f %f %f, means %f %f %f\n",
+                  balance, (smaxtime - smintime) / smean,
+                  (tmaxtime - tmintime) / tmean, mean, smean, tmean);
+
+          fclose(logfile);
         }
       }
 
@@ -2312,7 +2361,11 @@ void engine_step(struct engine *e) {
   /* CPU timing used for estimating the balance.*/
 #ifdef WITH_MPI
   double cputime = 0.0;
-  if (e->reparttype->type != REPART_NONE) cputime = clocks_get_cputime_used();
+  double sys_cputime = 0.0;
+  if (e->reparttype->type != REPART_NONE) {
+    cputime = clocks_get_cputime_used();
+    sys_cputime = clocks_get_sys_cputime_used();
+  }
 #endif
 
   /* Start all the tasks. */
@@ -2323,8 +2376,10 @@ void engine_step(struct engine *e) {
 #ifdef WITH_MPI
   /* And the actual CPU time used. XXX ignore these calls unless the trigger
    * will be checked. Could move into engine_launch() and always call? XXX */
-  if (e->reparttype->type != REPART_NONE)
+  if (e->reparttype->type != REPART_NONE) {
     e->cputime_last_step_launch = clocks_get_cputime_used() - cputime;
+    e->sys_cputime_last_step_launch = clocks_get_sys_cputime_used() - sys_cputime;
+  }
 #endif
 
 #ifdef SWIFT_GRAVITY_FORCE_CHECKS
@@ -3423,6 +3478,7 @@ void engine_init(struct engine *e, struct space *s, struct swift_params *params,
   e->stf_this_timestep = 0;
 #ifdef WITH_MPI
   e->cputime_last_step_launch = 0;
+  e->sys_cputime_last_step_launch = 0;
   e->last_repartition = 0;
 #endif
   e->total_nr_cells = 0;

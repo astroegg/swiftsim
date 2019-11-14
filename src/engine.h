@@ -358,6 +358,7 @@ struct engine {
 #ifdef WITH_MPI
   /* CPU time of last engine launch in last engine step. */
   double cputime_last_step_launch;
+  double sys_cputime_last_step_launch;
 
   /* Step of last repartition. */
   int last_repartition;
