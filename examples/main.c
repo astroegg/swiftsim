@@ -587,9 +587,6 @@ int main(int argc, char *argv[]) {
     error("Can't run with time-step limiter over MPI (yet)");
   if (with_timestep_sync)
     error("Can't run with time-step synchronization over MPI (yet)");
-#ifdef WITH_LOGGER
-  error("Can't run with the particle logger over MPI (yet)");
-#endif
 #endif
 
   /* Temporary early aborts for modes not supported with hand-vec. */
@@ -1209,7 +1206,7 @@ int main(int argc, char *argv[]) {
 #ifdef WITH_MPI
     /* Split the space. */
     engine_split(&e, &initial_partition);
-    engine_redistribute(&e);
+    engine_redistribute(&e, /* initial_redistribute */ 1);
 #endif
 
     /* Initialise the particles */
@@ -1419,6 +1416,9 @@ int main(int argc, char *argv[]) {
     }
 #ifdef WITH_LOGGER
     logger_log_all(e.logger, &e);
+
+    /* Write a final index file */
+    engine_dump_index(&e);
 
     /* Write a sentinel timestamp */
     logger_log_timestamp(e.logger, e.ti_current, e.time,
