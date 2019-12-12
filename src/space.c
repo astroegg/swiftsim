@@ -4338,6 +4338,10 @@ void space_first_init_gparts_mapper(void *restrict map_data, int count,
 
     gravity_first_init_gpart(&gp[k], grav_props);
 
+#ifdef WITH_LOGGER
+    logger_part_data_init(&gp[k].logger_data);
+#endif
+
 #ifdef SWIFT_DEBUG_CHECKS
     /* Initialise the time-integration check variables */
     gp[k].ti_drift = 0;
@@ -4379,6 +4383,7 @@ void space_first_init_sparts_mapper(void *restrict map_data, int count,
   const float initial_h = s->initial_spart_h;
 
   const int with_feedback = (e->policy & engine_policy_feedback);
+  const int with_cosmology = (e->policy & engine_policy_cosmology);
 
   const struct cosmology *cosmo = e->cosmology;
   const struct stars_props *stars_properties = e->stars_properties;
@@ -4417,7 +4422,12 @@ void space_first_init_sparts_mapper(void *restrict map_data, int count,
   /* Initialise the rest */
   for (int k = 0; k < count; k++) {
 
-    stars_first_init_spart(&sp[k], stars_properties);
+    stars_first_init_spart(&sp[k], stars_properties, with_cosmology, cosmo->a,
+                           e->time);
+
+#ifdef WITH_LOGGER
+    logger_part_data_init(&sp[k].logger_data);
+#endif
 
     /* Also initialise the chemistry */
     chemistry_first_init_spart(chemistry, &sp[k]);
