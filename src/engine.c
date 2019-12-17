@@ -1462,9 +1462,12 @@ void engine_rebuild(struct engine *e, int repartitioned,
   /* Re-build the top-level space. */
   space_rebuild(e->s, repartitioned, e->verbose);
 
+  MPI_Request mesh_communication;
+
   /* Compute the density field on the gravity mesh */
   if ((e->policy & engine_policy_self_gravity) && e->s->periodic)
-    pm_mesh_assign_densities(e->mesh, e->s, &e->threadpool, e->verbose);
+    pm_mesh_assign_densities(e->mesh, e->s, &e->threadpool, &mesh_communication,
+                             e->verbose);
 
   /* At this point, we have the upper-level cells. Now recursively split each
      cell to get the full AMR grid. */
@@ -1587,7 +1590,8 @@ void engine_rebuild(struct engine *e, int repartitioned,
 
   /* Re-compute the potential for the mesh forces */
   if ((e->policy & engine_policy_self_gravity) && e->s->periodic)
-    pm_mesh_compute_potential(e->mesh, e->s, &e->threadpool, e->verbose);
+    pm_mesh_compute_potential(e->mesh, e->s, &e->threadpool,
+                              &mesh_communication, e->verbose);
 
   /* Clear the counters of updates since the last rebuild */
   e->updates_since_rebuild = 0;

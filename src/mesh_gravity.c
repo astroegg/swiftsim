@@ -489,10 +489,13 @@ void mesh_apply_Green_function(struct threadpool* tp, fftw_complex* frho,
  * @param mesh The #pm_mesh used to store the potential.
  * @param s The #space containing the particles.
  * @param tp The #threadpool object used for parallelisation.
+ * @param request The MPI communication request for the asynchronous All-reduce
+ * of the density mesh.
  * @param verbose Are we talkative?
  */
 void pm_mesh_assign_densities(struct pm_mesh* mesh, const struct space* s,
-                              struct threadpool* tp, const int verbose) {
+                              struct threadpool* tp, MPI_Request* request,
+                              const int verbose) {
 
 #ifdef HAVE_FFTW
 
@@ -545,9 +548,13 @@ void pm_mesh_assign_densities(struct pm_mesh* mesh, const struct space* s,
   MPI_Barrier(MPI_COMM_WORLD);
   tic = getticks();
 
-  /* Merge everybody's share of the density mesh */
-  MPI_Allreduce(MPI_IN_PLACE, rho, N * N * N, MPI_DOUBLE, MPI_SUM,
-                MPI_COMM_WORLD);
+  /* Merge everybody's share of the density mesh.
+   *
+   * Since this can be a rather large mesh, we do this asynchronously
+   * and let the code do the rest of the rebuild procedure at the
+   * same time. */
+  MPI_Iallreduce(MPI_IN_PLACE, rho, N * N * N, MPI_DOUBLE, MPI_SUM,
+                 MPI_COMM_WORLD, request);
 
   if (verbose)
     message("Mesh comunication took %.3f %s.",
@@ -570,10 +577,13 @@ void pm_mesh_assign_densities(struct pm_mesh* mesh, const struct space* s,
  * @param mesh The #pm_mesh used to store the potential.
  * @param s The #space containing the particles.
  * @param tp The #threadpool object used for parallelisation.
+ * @param request The MPI communication request for the asynchronous All-reduce
+ * of the density mesh.
  * @param verbose Are we talkative?
  */
 void pm_mesh_compute_potential(struct pm_mesh* mesh, const struct space* s,
-                               struct threadpool* tp, const int verbose) {
+                               struct threadpool* tp, MPI_Request* request,
+                               const int verbose) {
 
   ticks tic = getticks();
 
@@ -596,6 +606,11 @@ void pm_mesh_compute_potential(struct pm_mesh* mesh, const struct space* s,
     error("Error allocating memory for transform of density mesh");
   memuse_log_allocation("fftw_frho", frho, 1,
                         sizeof(fftw_complex) * N * N * (N_half + 1));
+
+#ifdef WITH_MPI
+  /* Make sure the communication has arrived */
+  MPI_Wait(request, MPI_STATUS_IGNORE);
+#endif
 
   /* Prepare the FFT library */
   fftw_plan forward_plan = fftw_plan_dft_r2c_3d(
