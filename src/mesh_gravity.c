@@ -557,7 +557,7 @@ void pm_mesh_assign_densities(struct pm_mesh* mesh, const struct space* s,
                  MPI_COMM_WORLD, request);
 
   if (verbose)
-    message("Mesh comunication took %.3f %s.",
+    message("Starting mesh comunication took %.3f %s.",
             clocks_from_ticks(getticks() - tic), clocks_getunit());
 #endif
 
@@ -608,9 +608,21 @@ void pm_mesh_compute_potential(struct pm_mesh* mesh, const struct space* s,
                         sizeof(fftw_complex) * N * N * (N_half + 1));
 
 #ifdef WITH_MPI
+
+  tic = getticks();
+
   /* Make sure the communication has arrived */
-  MPI_Wait(request, MPI_STATUS_IGNORE);
+  int res;
+  if ((res = MPI_Wait(request, MPI_STATUS_IGNORE)) != MPI_SUCCESS) {
+    mpi_error(res, "Failed to All-reduce the density mesh");
+  }
+
+  if (verbose)
+    message("Waiting for mesh communication took %.3f %s.",
+            clocks_from_ticks(getticks() - tic), clocks_getunit());
 #endif
+
+  tic = getticks();
 
   /* Prepare the FFT library */
   fftw_plan forward_plan = fftw_plan_dft_r2c_3d(

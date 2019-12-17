@@ -54,7 +54,8 @@ num_files = len(sys.argv) - 1
 
 labels = [
     ["Gpart assignment", 1],
-    ["Mesh comunication", 1],
+    ["Starting mesh comunication", 1],
+    ["Waiting for mesh comunication", 1],
     ["Forward Fourier transform", 1],
     ["Green function", 1],
     ["Backwards Fourier transform", 1],

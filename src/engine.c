@@ -1462,6 +1462,7 @@ void engine_rebuild(struct engine *e, int repartitioned,
   /* Re-build the top-level space. */
   space_rebuild(e->s, repartitioned, e->verbose);
 
+  /* Communication request for the density mesh */
   MPI_Request mesh_communication;
 
   /* Compute the density field on the gravity mesh */
