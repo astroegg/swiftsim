@@ -1962,20 +1962,6 @@ void space_rebuild(struct space *s, int repartitioned, int verbose) {
      memory pool. */
   if (s->with_star_formation) space_reorder_extras(s, verbose);
 
-  /* At this point, we have the upper-level cells. Now recursively split each
-     cell to get the full AMR grid. */
-  space_split(s, verbose);
-
-#ifdef SWIFT_DEBUG_CHECKS
-  /* Check that the multipole construction went OK */
-  if (s->with_self_gravity)
-    for (int k = 0; k < s->nr_cells; k++)
-      cell_check_multipole(&s->cells_top[k], s->e->gravity_properties);
-#endif
-
-  /* Clean up any stray sort indices in the cell buffer. */
-  space_free_buff_sort_indices(s);
-
   if (verbose)
     message("took %.3f %s.", clocks_from_ticks(getticks() - tic),
             clocks_getunit());
@@ -1997,6 +1983,9 @@ void space_split(struct space *s, int verbose) {
   threadpool_map(&s->e->threadpool, space_split_mapper,
                  s->local_cells_with_particles_top,
                  s->nr_local_cells_with_particles, sizeof(int), 0, s);
+
+  /* Clean up any stray sort indices in the cell buffer. */
+  space_free_buff_sort_indices(s);
 
   if (verbose)
     message("took %.3f %s.", clocks_from_ticks(getticks() - tic),

@@ -80,6 +80,7 @@ labels = [
     ["scheduler_reweight:", 1],
     ["space_list_useful_top_level_cells:", 1],
     ["space_rebuild:", 1],
+    ["space_split:", 1],
     ["engine_drift_all:", 0],
     ["engine_unskip:", 0],
     ["engine_collect_end_of_step:", 0],

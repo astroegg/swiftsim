@@ -1459,8 +1459,19 @@ void engine_rebuild(struct engine *e, int repartitioned,
   e->forcerebuild = 0;
   e->restarting = 0;
 
-  /* Re-build the space. */
+  /* Re-build the top-level space. */
   space_rebuild(e->s, repartitioned, e->verbose);
+
+  /* At this point, we have the upper-level cells. Now recursively split each
+     cell to get the full AMR grid. */
+  space_split(e->s, e->verbose);
+
+#ifdef SWIFT_DEBUG_CHECKS
+  /* Check that the multipole construction went OK */
+  if (e->policy & engine_policy_self_gravity)
+    for (int k = 0; k < e->s->nr_cells; k++)
+      cell_check_multipole(&e->s->cells_top[k], e->gravity_properties);
+#endif
 
   /* Report the number of cells and memory */
   if (e->verbose)
@@ -2202,7 +2213,10 @@ void engine_step(struct engine *e) {
   }
 
   /* We need some cells to exist but not the whole task stuff. */
-  if (e->restarting) space_rebuild(e->s, 0, e->verbose);
+  if (e->restarting) {
+    space_rebuild(e->s, 0, e->verbose);
+    space_split(e->s, e->verbose);
+  }
 
   /* Move forward in time */
   e->ti_old = e->ti_current;
