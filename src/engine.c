@@ -1462,6 +1462,10 @@ void engine_rebuild(struct engine *e, int repartitioned,
   /* Re-build the top-level space. */
   space_rebuild(e->s, repartitioned, e->verbose);
 
+  /* Compute the density field on the gravity mesh */
+  if ((e->policy & engine_policy_self_gravity) && e->s->periodic)
+    pm_mesh_assign_densities(e->mesh, e->s, &e->threadpool, e->verbose);
+
   /* At this point, we have the upper-level cells. Now recursively split each
      cell to get the full AMR grid. */
   space_split(e->s, e->verbose);
@@ -1516,10 +1520,6 @@ void engine_rebuild(struct engine *e, int repartitioned,
   if (e->verbose)
     message("updating particle counts took %.3f %s.",
             clocks_from_ticks(getticks() - tic2), clocks_getunit());
-
-  /* Re-compute the mesh forces */
-  if ((e->policy & engine_policy_self_gravity) && e->s->periodic)
-    pm_mesh_compute_potential(e->mesh, e->s, &e->threadpool, e->verbose);
 
   /* Re-compute the maximal RMS displacement constraint */
   if (e->policy & engine_policy_cosmology)
@@ -1584,6 +1584,10 @@ void engine_rebuild(struct engine *e, int repartitioned,
 
   /* Print the status of the system */
   if (e->verbose) engine_print_task_counts(e);
+
+  /* Re-compute the potential for the mesh forces */
+  if ((e->policy & engine_policy_self_gravity) && e->s->periodic)
+    pm_mesh_compute_potential(e->mesh, e->s, &e->threadpool, e->verbose);
 
   /* Clear the counters of updates since the last rebuild */
   e->updates_since_rebuild = 0;

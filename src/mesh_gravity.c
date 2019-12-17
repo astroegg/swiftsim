@@ -481,21 +481,18 @@ void mesh_apply_Green_function(struct threadpool* tp, fftw_complex* frho,
 #endif
 
 /**
- * @brief Compute the potential, including periodic correction on the mesh.
+ * @brief Interpolate the gpart onto the density and mesh and communicate it
+ * with all the MPI ranks.
  *
- * Interpolates the top-level multipoles on-to a mesh, move to Fourier space,
- * compute the potential including short-range correction and move back
- * to real space. We use CIC for the interpolation.
- *
- * Note that there is no multiplication by G_newton at this stage.
+ * We use CIC for the interpolation.
  *
  * @param mesh The #pm_mesh used to store the potential.
  * @param s The #space containing the particles.
  * @param tp The #threadpool object used for parallelisation.
  * @param verbose Are we talkative?
  */
-void pm_mesh_compute_potential(struct pm_mesh* mesh, const struct space* s,
-                               struct threadpool* tp, const int verbose) {
+void pm_mesh_assign_densities(struct pm_mesh* mesh, const struct space* s,
+                              struct threadpool* tp, const int verbose) {
 
 #ifdef HAVE_FFTW
 
@@ -512,27 +509,12 @@ void pm_mesh_compute_potential(struct pm_mesh* mesh, const struct space* s,
 
   /* Some useful constants */
   const int N = mesh->N;
-  const int N_half = N / 2;
   const double cell_fac = N / box_size;
 
   /* Use the memory allocated for the potential to temporarily store rho */
   double* restrict rho = mesh->potential;
   if (rho == NULL) error("Error allocating memory for density mesh");
   bzero(rho, N * N * N * sizeof(double));
-
-  /* Allocates some memory for the mesh in Fourier space */
-  fftw_complex* restrict frho =
-      (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N * (N_half + 1));
-  if (frho == NULL)
-    error("Error allocating memory for transform of density mesh");
-  memuse_log_allocation("fftw_frho", frho, 1,
-                        sizeof(fftw_complex) * N * N * (N_half + 1));
-
-  /* Prepare the FFT library */
-  fftw_plan forward_plan = fftw_plan_dft_r2c_3d(
-      N, N, N, rho, frho, FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
-  fftw_plan inverse_plan = fftw_plan_dft_c2r_3d(
-      N, N, N, frho, rho, FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
 
   ticks tic = getticks();
 
@@ -574,8 +556,52 @@ void pm_mesh_compute_potential(struct pm_mesh* mesh, const struct space* s,
 
   /* message("\n\n\n DENSITY"); */
   /* print_array(rho, N); */
+}
 
-  tic = getticks();
+/**
+ * @brief Compute the potential, including periodic correction on the mesh.
+ *
+ * Use the pre-computed density field, move to Fourier space,
+ * compute the potential including short-range correction and move back
+ * to real space. We also undo the interpolation CIC.
+ *
+ * Note that there is no multiplication by G_newton at this stage.
+ *
+ * @param mesh The #pm_mesh used to store the potential.
+ * @param s The #space containing the particles.
+ * @param tp The #threadpool object used for parallelisation.
+ * @param verbose Are we talkative?
+ */
+void pm_mesh_compute_potential(struct pm_mesh* mesh, const struct space* s,
+                               struct threadpool* tp, const int verbose) {
+
+  ticks tic = getticks();
+
+  const double r_s = mesh->r_s;
+  const double box_size = s->dim[0];
+
+  /* Some useful constants */
+  const int N = mesh->N;
+  const int N_half = N / 2;
+
+  /* The density was stored in the 'potential' array when assigining
+     the particles */
+  double* restrict rho = mesh->potential;
+  if (rho == NULL) error("Error allocating memory for density mesh");
+
+  /* Allocates some memory for the mesh in Fourier space */
+  fftw_complex* restrict frho =
+      (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N * (N_half + 1));
+  if (frho == NULL)
+    error("Error allocating memory for transform of density mesh");
+  memuse_log_allocation("fftw_frho", frho, 1,
+                        sizeof(fftw_complex) * N * N * (N_half + 1));
+
+  /* Prepare the FFT library */
+  fftw_plan forward_plan = fftw_plan_dft_r2c_3d(
+      N, N, N, rho, frho, FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
+  fftw_plan inverse_plan = fftw_plan_dft_c2r_3d(
+      N, N, N, frho, rho, FFTW_ESTIMATE | FFTW_DESTROY_INPUT);
 
   /* Fourier transform to go to magic-land */
   fftw_execute(forward_plan);
