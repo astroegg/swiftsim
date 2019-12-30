@@ -48,12 +48,14 @@ Gravity:
 
 # Parameters for the hydrodynamics scheme
 SPH:
-  resolution_eta:        1.2348   # Target smoothing length in units of the mean inter-particle separation (1.2348 == 48Ngbs with the cubic spline kernel).
-  h_min_ratio:           0.1      # Minimal smoothing in units of softening.
-  h_max:                 0.5      # Maximal softening in co-moving internal units.
-  CFL_condition:         0.1      # Courant-Friedrich-Levy condition for time integration.
-  minimal_temperature:   100.0    # (internal units)
-  initial_temperature:   268.7
+  resolution_eta:                    1.2348   # Target smoothing length in units of the mean inter-particle separation (1.2348 == 48Ngbs with the cubic spline kernel).
+  h_min_ratio:                       0.1      # Minimal smoothing in units of softening.
+  h_max:                             0.5      # Maximal softening in co-moving internal units.
+  CFL_condition:                     0.1      # Courant-Friedrich-Levy condition for time integration.
+  minimal_temperature:               100.0    # (internal units)
+  initial_temperature:               268.7    # (internal units)
+  particle_splitting:                1        # Particle splitting is ON
+  particle_splitting_mass_threshold: 7e-4     # (internal units, i.e. 7e6 Msun ~ 4x initial gas particle mass)
 
 # Parameters of the stars neighbour search
 Stars:
@@ -178,7 +180,7 @@ EAGLEFeedback:
 # EAGLE AGN model
 EAGLEAGN:
   subgrid_seed_mass_Msun:           1.5e5      # Black hole subgrid mass at creation time in solar masses.
-  max_eddington_fraction:           1.5        # Maximal allowed accretion rate in units of the Eddington rate.
+  max_eddington_fraction:           1.0        # Maximal allowed accretion rate in units of the Eddington rate.
   eddington_fraction_for_recording: 0.1        # Record the last time BHs reached an Eddington ratio above this threshold.
   viscous_alpha:                    1e6        # Normalisation constant of the Bondi viscuous time-scale accretion reduction term
   radiative_efficiency:             0.1        # Fraction of the accreted mass that gets radiated.
