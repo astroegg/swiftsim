@@ -79,7 +79,7 @@ runner_iact_nonsym_bh_gas_density(const float r2, const float *dx,
   bi->ngb_mass += mj;
 
   /* Neighbour sounds speed */
-  const float cj = hydro_get_comoving_soundspeed(pj);
+  float cj = hydro_get_comoving_soundspeed(pj);
 
   /* SIMPLE FIX, TEMPORARY to force lower sound speed for SF gas */
   if (xpj->sf_data.SFR > 0)
