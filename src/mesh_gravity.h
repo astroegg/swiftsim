@@ -26,6 +26,14 @@
 #include "gravity_properties.h"
 #include "restart.h"
 
+/* Get a type for the MPI requests and make it
+ * an innocuous alias when not using MPI */
+#ifdef WITH_MPI
+#include <mpi.h>
+#else
+typedef int MPI_Request;
+#endif
+
 /* Forward declarations */
 struct space;
 struct gpart;
